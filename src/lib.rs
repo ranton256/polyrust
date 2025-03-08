@@ -44,32 +44,6 @@ pub fn check_polygon_is_convex(vertices: &Vec<Point>) -> bool {
     is_convex
 }
 
-impl ConvexPolygon {
-    pub fn new(vertices: &Vec<Point>) -> ConvexPolygon {
-        assert!(check_polygon_is_convex(&vertices));
-        ConvexPolygon { vertices: vertices.clone() }
-    }
-
-    pub fn is_point_inside(&self, p: Point) -> bool {
-        let mut winding_number = 0;
-        let n = self.vertices.len();
-        for i in 0..n {
-            let v1 = self.vertices[i];
-            let v2 = self.vertices[(i + 1) % n];
-            if v1.y <= p.y {
-                if v2.y > p.y && is_left(v1, v2, p) > 0.0 {
-                    winding_number += 1;
-                }
-            } else {
-                if v2.y <= p.y && is_left(v1, v2, p) < 0.0 {
-                    winding_number -= 1;
-                }
-            }
-        }
-        winding_number != 0
-    }
-}
-
 impl Point {
     pub fn new(x: f32, y: f32) -> Point {
         Point { x, y }
@@ -133,5 +107,54 @@ pub fn intersect_line_segments(seg_one: &Segment, seg_two: &Segment) -> Option<P
         }
 
         return None
+    }
+}
+
+
+impl ConvexPolygon {
+    pub fn new(vertices: &Vec<Point>) -> ConvexPolygon {
+        assert!(check_polygon_is_convex(&vertices));
+        ConvexPolygon { vertices: vertices.clone() }
+    }
+
+    pub fn is_point_inside(&self, p: Point) -> bool {
+        let mut winding_number = 0;
+        let n = self.vertices.len();
+        for i in 0..n {
+            let v1 = self.vertices[i];
+            let v2 = self.vertices[(i + 1) % n];
+            if v1.y <= p.y {
+                if v2.y > p.y && is_left(v1, v2, p) > 0.0 {
+                    winding_number += 1;
+                }
+            } else {
+                if v2.y <= p.y && is_left(v1, v2, p) < 0.0 {
+                    winding_number -= 1;
+                }
+            }
+        }
+        winding_number != 0
+    }
+
+    pub fn intersect_with_segment(&self, segment: &Segment) -> (Option<Point>, Option<Point>) {
+        let mut intersections = Vec::new();
+        let n = self.vertices.len();
+        for i in 0..n {
+            let v1 = self.vertices[i];
+            let v2 = self.vertices[(i + 1) % n];
+            let seg = Segment::new(v1, v2);
+            if let Some(intersection) = intersect_line_segments(&seg, segment) {
+                intersections.push(intersection);
+            }
+        }
+        assert!(intersections.len() <= 2);
+        
+        if intersections.is_empty() {
+            (None, None)
+        } else if intersections.len() == 1 || intersections[0] == intersections[1] {
+            (Some(intersections[0]), None)
+        } else {
+            (Some(intersections[0]), Some(intersections[1]))
+        }
     }
 }

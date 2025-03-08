@@ -116,3 +116,84 @@ fn test_non_convex_polygon() {
 
     ConvexPolygon::new(&vertices); // Should panic as polygon is not convex
 }
+
+
+#[test]
+fn test_segment_intersects_triangle() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(&vertices);
+    let segment = Segment::new(
+        Point { x: 0.0, y: 1.0 },
+        Point { x: 2.0, y: 1.0 }
+    );
+    let pts = polygon.intersect_with_segment(&segment);
+    assert!(pts.0.is_some());
+    assert_eq!(pts.0.unwrap().x, 1.5);
+    assert_eq!(pts.0.unwrap().y, 1.0);
+    
+    assert!(pts.1.is_some());
+    assert_eq!(pts.1.unwrap().x, 0.5);
+    assert_eq!(pts.1.unwrap().y, 1.0);
+
+}
+
+#[test]
+fn test_segment_outside_polygon() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(&vertices);
+    let segment = Segment::new(
+        Point { x: -2.0, y: 3.0 },
+        Point { x: -1.0, y: 3.0 }
+    );
+    let (pt1, pt2) = polygon.intersect_with_segment(&segment);
+    assert!(pt1.is_none());
+    assert!(pt2.is_none());
+}
+
+#[test]
+fn test_segment_touches_vertex() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(&vertices);
+    let segment = Segment::new(
+        Point { x: 0.0, y: 0.0 },
+        Point { x: -1.0, y: -1.0 },
+    );
+    let (pt1, pt2) = polygon.intersect_with_segment(&segment);
+    
+    assert!(pt1.is_some());
+    assert_eq!(pt1.unwrap().x, 0.0);
+    assert_eq!(pt1.unwrap().y, 0.0);
+    dbg!(&pt2);
+    assert!(pt2.is_none());
+}
+
+#[test]
+fn test_segment_touches_edge() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(&vertices);
+    let segment = Segment::new(
+        Point { x: 1.0, y: 0.0 },
+        Point { x: -1.0, y: -1.0 },
+    );
+    let (pt1, pt2) = polygon.intersect_with_segment(&segment);
+    assert!(pt1.is_some());
+    assert_eq!(pt1.unwrap().x, 1.0);
+    assert_eq!(pt1.unwrap().y, 0.0);
+    assert!(pt2.is_none());
+}
