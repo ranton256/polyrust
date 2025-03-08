@@ -1,5 +1,5 @@
 
-use polyrust::{Point, Segment, ConvexPolygon};
+use polyrust::{check_polygon_is_convex, ConvexPolygon, Point, Segment};
 use polyrust::intersect_line_segments;
 
 
@@ -48,7 +48,7 @@ fn test_point_inside_triangle() {
         Point { x: 2.0, y: 0.0 },
         Point { x: 1.0, y: 2.0 },
     ];
-    let polygon = ConvexPolygon::new(vertices);
+    let polygon = ConvexPolygon::new(&vertices);
     let point = Point { x: 1.0, y: 1.0 };
     assert!(polygon.is_point_inside(point));
 }
@@ -60,7 +60,7 @@ fn test_point_outside_triangle() {
         Point { x: 2.0, y: 0.0 },
         Point { x: 1.0, y: 2.0 },
     ];
-    let polygon = ConvexPolygon::new(vertices);
+    let polygon = ConvexPolygon::new(&vertices);
     let point = Point { x: 3.0, y: 3.0 };
     assert!(!polygon.is_point_inside(point));
 }
@@ -72,7 +72,7 @@ fn test_point_on_vertex() {
         Point { x: 2.0, y: 0.0 },
         Point { x: 1.0, y: 2.0 },
     ];
-    let polygon = ConvexPolygon::new(vertices);
+    let polygon = ConvexPolygon::new(&vertices);
     let point = Point { x: 0.0, y: 0.0 };
     assert!(polygon.is_point_inside(point));
 }
@@ -84,7 +84,7 @@ fn test_point_on_edge() {
         Point { x: 2.0, y: 0.0 },
         Point { x: 1.0, y: 2.0 },
     ];
-    let polygon = ConvexPolygon::new(vertices);
+    let polygon = ConvexPolygon::new(&vertices);
     let point = Point { x: 1.0, y: 0.0 };
     assert!(polygon.is_point_inside(point));
 }
@@ -97,7 +97,22 @@ fn test_point_inside_square() {
         Point { x: 2.0, y: 2.0 },
         Point { x: 0.0, y: 2.0 },
     ];
-    let polygon = ConvexPolygon::new(vertices);
+    let polygon = ConvexPolygon::new(&vertices);
     let point = Point { x: 1.0, y: 1.0 };
     assert!(polygon.is_point_inside(point));
+}
+
+#[test]
+#[should_panic(expected = "assertion failed: check_polygon_is_convex(&vertices)")]
+fn test_non_convex_polygon() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 1.0 }, // Creates a concave shape
+        Point { x: 2.0, y: 2.0 },
+        Point { x: 0.0, y: 2.0 },
+    ];
+    assert!(!check_polygon_is_convex(&vertices));
+
+    ConvexPolygon::new(&vertices); // Should panic as polygon is not convex
 }

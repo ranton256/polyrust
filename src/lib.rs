@@ -26,9 +26,28 @@ fn is_left(p0: Point, p1: Point, p2: Point) -> f32 {
     (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
 }
 
+pub fn check_polygon_is_convex(vertices: &Vec<Point>) -> bool {
+    let n = vertices.len();
+    if n < 3 {
+        return false;
+    }
+    let mut is_convex = true;
+    for i in 0..n {
+        let p0 = vertices[i];
+        let p1 = vertices[(i + 1) % n];
+        let p2 = vertices[(i + 2) % n];
+        if is_left(p0, p1, p2) < 0.0 {
+            is_convex = false;
+            break;
+        }
+    }
+    is_convex
+}
+
 impl ConvexPolygon {
-    pub fn new(vertices: Vec<Point>) -> ConvexPolygon {
-        ConvexPolygon { vertices }
+    pub fn new(vertices: &Vec<Point>) -> ConvexPolygon {
+        assert!(check_polygon_is_convex(&vertices));
+        ConvexPolygon { vertices: vertices.clone() }
     }
 
     pub fn is_point_inside(&self, p: Point) -> bool {
