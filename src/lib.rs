@@ -18,6 +18,39 @@ pub struct Segment {
     pub p2: Point,
 }
 
+pub struct ConvexPolygon {
+    pub vertices: Vec<Point>,
+}
+
+fn is_left(p0: Point, p1: Point, p2: Point) -> f32 {
+    (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)
+}
+
+impl ConvexPolygon {
+    pub fn new(vertices: Vec<Point>) -> ConvexPolygon {
+        ConvexPolygon { vertices }
+    }
+
+    pub fn is_point_inside(&self, p: Point) -> bool {
+        let mut winding_number = 0;
+        let n = self.vertices.len();
+        for i in 0..n {
+            let v1 = self.vertices[i];
+            let v2 = self.vertices[(i + 1) % n];
+            if v1.y <= p.y {
+                if v2.y > p.y && is_left(v1, v2, p) > 0.0 {
+                    winding_number += 1;
+                }
+            } else {
+                if v2.y <= p.y && is_left(v1, v2, p) < 0.0 {
+                    winding_number -= 1;
+                }
+            }
+        }
+        winding_number != 0
+    }
+}
+
 impl Point {
     pub fn new(x: f32, y: f32) -> Point {
         Point { x, y }
@@ -35,7 +68,6 @@ impl Line {
         Line::new(a, b, c)
     }
 }
-
 
 impl Segment {
     pub fn new(p1: Point, p2: Point) -> Segment {

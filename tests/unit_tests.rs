@@ -1,6 +1,7 @@
 
-use polyrust::{Point, Segment};
+use polyrust::{Point, Segment, ConvexPolygon};
 use polyrust::intersect_line_segments;
+
 
 #[test]
 fn test_intersect_line_segments() {
@@ -36,4 +37,67 @@ fn test_point_on_line_not_on_segment() {
     let line_two = Segment::new(p3, p4);
     let intersection = intersect_line_segments(&line_one, &line_two);
     assert_eq!(intersection, None);
+}
+
+
+
+#[test]
+fn test_point_inside_triangle() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(vertices);
+    let point = Point { x: 1.0, y: 1.0 };
+    assert!(polygon.is_point_inside(point));
+}
+
+#[test]
+fn test_point_outside_triangle() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(vertices);
+    let point = Point { x: 3.0, y: 3.0 };
+    assert!(!polygon.is_point_inside(point));
+}
+
+#[test]
+fn test_point_on_vertex() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(vertices);
+    let point = Point { x: 0.0, y: 0.0 };
+    assert!(polygon.is_point_inside(point));
+}
+
+#[test]
+fn test_point_on_edge() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(vertices);
+    let point = Point { x: 1.0, y: 0.0 };
+    assert!(polygon.is_point_inside(point));
+}
+
+#[test]
+fn test_point_inside_square() {
+    let vertices = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 2.0, y: 2.0 },
+        Point { x: 0.0, y: 2.0 },
+    ];
+    let polygon = ConvexPolygon::new(vertices);
+    let point = Point { x: 1.0, y: 1.0 };
+    assert!(polygon.is_point_inside(point));
 }
