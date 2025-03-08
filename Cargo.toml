@@ -1,0 +1,19 @@
+[package]
+name = "polyrust"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "polyrust"
+path = "src/main.rs"
+
+
+[lib]
+name = "polyrust"
+path = "src/lib.rs"
+
+[[test]]
+name = "unit_tests"
+path = "tests/unit_tests.rs"
+
+[dependencies]
