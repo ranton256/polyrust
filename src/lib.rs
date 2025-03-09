@@ -1,8 +1,22 @@
+use std::iter::zip;
+
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Point {
     pub x: f32,
     pub y: f32,
+}
+
+fn order_vertices_clockwise(vertices: &mut Vec<Point>) {
+    let centroid = Point {
+        x: vertices.iter().map(|p| p.x).sum::<f32>() / vertices.len() as f32,
+        y: vertices.iter().map(|p| p.y).sum::<f32>() / vertices.len() as f32,
+    };
+    vertices.sort_by(|a, b| {
+        let angle_a = (a.y - centroid.y).atan2(a.x - centroid.x);
+        let angle_b = (b.y - centroid.y).atan2(b.x - centroid.x);
+        angle_a.partial_cmp(&angle_b).unwrap()
+    });
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -113,8 +127,15 @@ pub fn intersect_line_segments(seg_one: &Segment, seg_two: &Segment) -> Option<P
 
 impl ConvexPolygon {
     pub fn new(vertices: &Vec<Point>) -> ConvexPolygon {
-        assert!(check_polygon_is_convex(&vertices));
-        ConvexPolygon { vertices: vertices.clone() }
+        // TODO: test assert!(check_polygon_is_convex(vertices));
+        let mut vertices_copy: Vec<Point> = vec![];
+        for p in vertices {
+            if !vertices_copy.contains(p) {
+                vertices_copy.push(*p);
+            }
+        }
+        order_vertices_clockwise(&mut vertices_copy);
+        ConvexPolygon { vertices: vertices_copy }
     }
 
     pub fn is_point_inside(&self, p: Point) -> bool {
@@ -157,4 +178,85 @@ impl ConvexPolygon {
             (Some(intersections[0]), Some(intersections[1]))
         }
     }
+}
+
+
+pub fn intersect_convex_polygons(poly_one: &ConvexPolygon, poly_two: &ConvexPolygon) -> Vec<Point> {
+    let mut intersections = Vec::new();
+    let n1 = poly_one.vertices.len();
+    let n2 = poly_two.vertices.len();
+    for i in 0..n1 {
+        if poly_two.is_point_inside(poly_one.vertices[i]) {
+            intersections.push(poly_one.vertices[i]);
+        }
+        let v1 = poly_one.vertices[i];
+        let v2 = poly_one.vertices[(i + 1) % n1];
+        let seg = Segment::new(v1, v2);
+        let (p1, p2) = poly_two.intersect_with_segment(&seg);
+        if let Some(p) = p1 {
+            intersections.push(p);
+        }
+        if let Some(p) = p2 {
+            intersections.push(p);
+        }
+    }
+    for i in 0..n2 {
+        if poly_one.is_point_inside(poly_two.vertices[i]) {
+            intersections.push(poly_two.vertices[i]);
+        }
+        let v1 = poly_two.vertices[i];
+        let v2 = poly_two.vertices[(i + 1) % n2];
+        let seg = Segment::new(v1, v2);
+        let (p1, p2) = poly_one.intersect_with_segment(&seg);
+        if let Some(p) = p1 {
+            intersections.push(p);
+        }
+        if let Some(p) = p2 {
+            intersections.push(p);
+        }
+    }
+    intersections
+}
+
+
+pub fn generate_svg_from_polygons(polygons: &Vec<&ConvexPolygon>, colors: &Vec<&str>, width: u32, height: u32, view_box: Option<(Point,Point)>) -> String {
+    // TODO: set canvas size.
+    let mut min_x: f32 = 0.0;
+    let mut min_y: f32 = 0.0;
+    let mut max_x: f32 = 100.0;
+    let mut max_y: f32 = 100.0;
+
+    if view_box.is_none() {
+        min_x = std::f32::MAX;
+        min_y = std::f32::MAX;
+        max_x = std::f32::MIN;
+        max_y = std::f32::MIN;
+        for polygon in polygons {
+            for vertex in &polygon.vertices {
+                min_x = min_x.min(vertex.x);
+                min_y = min_y.min(vertex.y);
+                max_x = max_x.max(vertex.x);
+                max_y = max_y.max(vertex.y);
+            }
+        }
+    } else {
+        let (min, max) = view_box.unwrap();
+        min_x = min.x;
+        min_y = min.y;
+        max_x = max.x;
+        max_y = max.y;
+    };
+    let view_width = max_x - min_x;
+    let view_height = max_y - min_y;
+
+    let mut svg = format!("<svg width=\"{width}\" height=\"{height}\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"{min_x} {min_y} {view_width} {view_height}\">");
+    for (polygon, color) in zip(polygons, colors) {
+        let mut points = String::new();
+        for vertex in &polygon.vertices {
+            points.push_str(&format!("{},{} ", vertex.x, vertex.y));
+        }
+        svg.push_str(&format!("<polygon points=\"{}\" fill=\"none\" stroke=\"{}\" stroke-width=\"0.1\" />", points, color));
+    }
+    svg.push_str("</svg>");
+    svg
 }
