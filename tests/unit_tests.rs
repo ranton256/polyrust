@@ -235,8 +235,34 @@ fn test_intersect_convex_polygons_overlap() {
     let polygon2 = ConvexPolygon::new(&vertices2);
     
     let intersection = intersect_convex_polygons(&polygon1, &polygon2);
+    println!("intersection: {:?}", intersection);
+
+    let inter_poly = ConvexPolygon::new(&intersection);
+    let svg = generate_svg_from_polygons(&vec![&polygon1, &polygon2, &inter_poly], 
+        &vec!["blue", "red", "green"],
+        300, 200,
+        None,
+    );    
+    println!("{}", svg); // for debugging. Open the SVG file in a browser to see the polygons
+    
     assert!(!intersection.is_empty());
-    assert_eq!(intersection.len(), 4); // TODO: fix
+
+    // 1,1 1.5,1 1.25,1.5 1.5,1.25
+    let expected_vertices = vec![
+        "1,1",
+        "1.5,1.0",
+        "1.25,1.5",
+    ];
+    let pts = &inter_poly.vertices;
+    assert_eq!(pts.len(), expected_vertices.len());
+    for i in 0..intersection.len() {
+        let n = expected_vertices.len();
+        let i = i % n;
+        
+        assert_eq!(pts[i].x, expected_vertices[i].split(",").nth(0).unwrap().parse::<f32>().unwrap());
+        assert_eq!(pts[i].y, expected_vertices[i].split(",").nth(1).unwrap().parse::<f32>().unwrap());
+    }
+    
 }
 
 #[test]
@@ -255,13 +281,21 @@ fn test_intersect_convex_polygons_vertex_touch() {
     let polygon2 = ConvexPolygon::new(&vertices2);
     
     let intersection = intersect_convex_polygons(&polygon1, &polygon2);
+    let inter_poly = ConvexPolygon::new(&intersection);
+    let svg = generate_svg_from_polygons(&vec![&polygon1, &polygon2, &inter_poly],
+        &vec!["blue", "red", "green"],
+        300, 200, None);
+    println!("{}", svg); // for debugging. Open the SVG file in a browser to see the polygons
+
+    println!("inter_poly: {:?}", &inter_poly);
+
     assert!(!intersection.is_empty());
-    assert_eq!(intersection.len(), 1); // TODO: fix
-    assert_eq!(intersection[0].x, 1.0);
-    assert_eq!(intersection[0].y, 2.0);
+    let pts = &inter_poly.vertices;
+    assert_eq!(pts.len(), 1);
+    assert_eq!(pts[0].x, 1.0);
+    assert_eq!(pts[0].y, 2.0);
 }
 
-/* TODO: fix this test
 #[test]
 fn test_intersect_convex_polygons_edge_overlap() {
     let vertices1 = vec![
@@ -271,21 +305,28 @@ fn test_intersect_convex_polygons_edge_overlap() {
     ];
     let vertices2 = vec![
         Point { x: 0.0, y: 0.0 },
-        Point { x: 2.0, y: 0.0 },
-        Point { x: 1.0, y: -1.0 },
+        Point { x: 4.0, y: 0.0 },
+        Point { x: 5.0, y: 2.0 },
     ];
     let polygon1 = ConvexPolygon::new(&vertices1);
     let polygon2 = ConvexPolygon::new(&vertices2);
     
     let intersection = intersect_convex_polygons(&polygon1, &polygon2);
-    assert!(!intersection.is_empty());
-    assert_eq!(intersection.len(), 2);
-    assert_eq!(intersection[0].x, 0.0);
-    assert_eq!(intersection[0].y, 0.0);
-    assert_eq!(intersection[1].x, 2.0);
-    assert_eq!(intersection[1].y, 0.0);
+    let inter_poly = ConvexPolygon::new(&intersection);
+    let svg = generate_svg_from_polygons(&vec![&polygon1, &polygon2, &inter_poly],
+        &vec!["blue", "red", "green"],
+        300, 200, None);
+    println!("{}", svg); // for debugging. Open the SVG file in a browser to see the polygons
+
+    let pts = &inter_poly.vertices;
+    assert_eq!(pts.len(), 3);
+    assert_eq!(pts[0].x, 0.0);
+    assert_eq!(pts[0].y, 0.0);
+    assert_eq!(pts[1].x, 2.0);
+    assert_eq!(pts[1].y, 0.0);
+    assert_eq!(pts[2].x, 1.6666666);
+    assert_eq!(pts[2].y, 0.6666667);
 }
-*/
 
 #[test]
 fn test_generate_svg_from_polygons() {

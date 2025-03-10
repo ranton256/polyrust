@@ -51,6 +51,25 @@ fn main() {
     std::fs::write("poly_output.svg", svg_content).expect("Failed to write SVG file");
     println!("SVG file generated successfully.");
 
+    let vertices1 = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 2.0, y: 0.0 },
+        Point { x: 1.0, y: 2.0 },
+    ];
+    let vertices2 = vec![
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 4.0, y: 0.0 },
+        Point { x: 5.0, y: 2.0 },
+    ];
+    let polygon1 = ConvexPolygon::new(&vertices1);
+    let polygon2 = ConvexPolygon::new(&vertices2);
     
+    let intersection = intersect_convex_polygons(&polygon1, &polygon2);
+    let inter_poly = ConvexPolygon::new(&intersection);
+    let svg = generate_svg_from_polygons(&vec![&polygon1, &polygon2, &inter_poly],
+        &vec!["blue", "red", "green"],
+        300, 200, None);
+    std::fs::write("poly_output2.svg", svg).expect("Failed to write SVG file");
+    println!("SVG file generated successfully.");
 
 }

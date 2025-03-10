@@ -32,6 +32,7 @@ pub struct Segment {
     pub p2: Point,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct ConvexPolygon {
     pub vertices: Vec<Point>,
 }
@@ -127,13 +128,8 @@ pub fn intersect_line_segments(seg_one: &Segment, seg_two: &Segment) -> Option<P
 
 impl ConvexPolygon {
     pub fn new(vertices: &Vec<Point>) -> ConvexPolygon {
-        // TODO: test assert!(check_polygon_is_convex(vertices));
-        let mut vertices_copy: Vec<Point> = vec![];
-        for p in vertices {
-            if !vertices_copy.contains(p) {
-                vertices_copy.push(*p);
-            }
-        }
+        assert!(check_polygon_is_convex(vertices));
+        let mut vertices_copy = dedup_vertices(vertices);
         order_vertices_clockwise(&mut vertices_copy);
         ConvexPolygon { vertices: vertices_copy }
     }
@@ -168,6 +164,7 @@ impl ConvexPolygon {
                 intersections.push(intersection);
             }
         }
+        let intersections = dedup_vertices(&intersections);
         assert!(intersections.len() <= 2);
         
         if intersections.is_empty() {
@@ -178,6 +175,16 @@ impl ConvexPolygon {
             (Some(intersections[0]), Some(intersections[1]))
         }
     }
+}
+
+fn dedup_vertices(vertices: &Vec<Point>) -> Vec<Point> {
+    let mut vertices_copy: Vec<Point> = vec![];
+    for p in vertices {
+        if !vertices_copy.contains(p) {
+            vertices_copy.push(*p);
+        }
+    }
+    vertices_copy
 }
 
 
@@ -220,11 +227,10 @@ pub fn intersect_convex_polygons(poly_one: &ConvexPolygon, poly_two: &ConvexPoly
 
 
 pub fn generate_svg_from_polygons(polygons: &Vec<&ConvexPolygon>, colors: &Vec<&str>, width: u32, height: u32, view_box: Option<(Point,Point)>) -> String {
-    // TODO: set canvas size.
-    let mut min_x: f32 = 0.0;
-    let mut min_y: f32 = 0.0;
-    let mut max_x: f32 = 100.0;
-    let mut max_y: f32 = 100.0;
+    let mut min_x: f32;
+    let mut min_y: f32;
+    let mut max_x: f32;
+    let mut max_y: f32;
 
     if view_box.is_none() {
         min_x = std::f32::MAX;
